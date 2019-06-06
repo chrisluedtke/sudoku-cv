@@ -1,9 +1,9 @@
 lt green,lt purple,orange,lt purple,dk green,dk purple,dk purple,yellow,lt purple
 red,,dk green,dk blue,orange,,lt blue,dk blue,lt green
 dk blue,yellow,dk purple,red,lt green,lt blue,dk green,red,
-dk green,lt purple,,dk purple,red,lt purple,red,lt green,lt blue
+dk green,lt purple,orange,dk purple,red,lt purple,red,lt green,lt blue
 dk purple,lt blue,yellow,lt blue,,orange,yellow,dk blue,dk purple
-dk blue,red,empty,dk green,yellow,lt green,,dk green,orange
+dk blue,red,,dk green,yellow,lt green,,dk green,orange
 ,lt green,red,dk green,lt blue,,orange,red,dk purple
 dk green,yellow,lt blue,orange,dk purple,dk blue,lt green,yellow,lt blue
 lt purple,orange,dk blue,lt purple,yellow,lt green,,dk blue,lt purple
