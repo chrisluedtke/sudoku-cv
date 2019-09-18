@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en" class="h-100">
+  <head>
+    {% include 'includes/head.html' %}
+    {% block head %}{% endblock head %}
+    <title>sudoku-cv</title>
+  </head>
+  <body class="d-flex flex-column h-100 bg-secondary">
+    <header>
+    {% include 'includes/nav.html' %}
+    </header>
+    <main role="main">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 col-md-10 mx-auto">
+              <img src="{{ url_for('video_feed') }}" class="rounded shadow border border-dark" width="100%">
+          </div>
+        </div>
+      </div>
+    </main>
+    {% include 'includes/footer.html' %}
+  </body>
+</html>
