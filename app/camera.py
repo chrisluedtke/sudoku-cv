@@ -1,5 +1,19 @@
+# adapted from https://github.com/miguelgrinberg/flask-video-streaming
+from pathlib import Path
 import threading
 import time
+import os
+
+import cv2 as cv
+import numpy as np
+import skimage.io
+
+if os.getenv('CAMERA') == 'pi':
+    import io
+    import picamera
+
+from .sudoku import Sudoku
+from .sudoku_cv import detect_board, reduce_image_size
 
 try:
     from greenlet import getcurrent as get_ident
@@ -57,6 +71,8 @@ class BaseCamera(object):
     frame = None  # current frame is stored here by background thread
     last_access = 0  # time of last client access to the camera
     event = CameraEvent()
+    face_cascade = cv.CascadeClassifier(cv.data.haarcascades + 
+                                        "haarcascade_frontalface_default.xml")
 
     def __init__(self):
         """Start the background camera thread if it isn't running yet."""
@@ -72,7 +88,7 @@ class BaseCamera(object):
                 time.sleep(0)
 
     def get_frame(self):
-        """Return the current camera frame."""
+        """Return the current camera frame. Used in flask view."""
         BaseCamera.last_access = time.time()
 
         # wait for a signal from the camera thread
@@ -92,14 +108,95 @@ class BaseCamera(object):
         print('Starting camera thread.')
         frames_iterator = cls.frames()
         for frame in frames_iterator:
+            # TODO: process frame
+            frame = Sudoku.process_frame(frame)
+            frame = frame[...,::-1]  # RGB to BRG
+            frame = cv.imencode('.jpg', frame)[1].tobytes()
             BaseCamera.frame = frame
             BaseCamera.event.set()  # send signal to clients
             time.sleep(0)
 
-            # if there hasn't been any clients asking for frames in
+            # if there hasn't been any client asking for frames in
             # the last 10 seconds then stop the thread
             if time.time() - BaseCamera.last_access > 10:
                 frames_iterator.close()
                 print('Stopping camera thread due to inactivity.')
                 break
         BaseCamera.thread = None
+
+
+class PiCamera(BaseCamera):
+    @staticmethod
+    def frames():
+        with picamera.PiCamera() as camera:
+            # let camera warm up
+            time.sleep(2)
+
+            stream = io.BytesIO()
+            for _ in camera.capture_continuous(stream, 'jpeg',
+                                               use_video_port=True):
+                # return current frame
+                stream.seek(0)
+                frame = stream.read()
+                # BGR to RGB
+                yield frame[...,::-1]
+
+                # reset stream for next frame
+                stream.seek(0)
+                stream.truncate()
+
+
+class OpenCVCamera(BaseCamera):
+    video_source = 0
+
+    def __init__(self):
+        if os.getenv('OPENCV_CAMERA_SOURCE'):
+            OpenCVCamera.set_video_source(int(os.environ['OPENCV_CAMERA_SOURCE']))
+        super(OpenCVCamera, self).__init__()
+
+    @staticmethod
+    def set_video_source(source):
+        OpenCVCamera.video_source = source
+
+    @staticmethod
+    def frames():
+        camera = cv.VideoCapture(OpenCVCamera.video_source)
+        if not camera.isOpened():
+            raise RuntimeError('Could not start camera.')
+
+        while True:
+            # read current frame (array type)
+            _, frame = camera.read()
+
+            # BGR to RGB
+            yield frame[...,::-1]
+
+
+class EmuCamera(BaseCamera):
+    """An emulated camera implementation that streams a repeated sequence of
+    files."""
+    img_dir = Path(__file__).parent / 'img'
+    imgs = []
+    for f in img_dir.iterdir():
+        img = skimage.io.imread(f)
+        img = reduce_image_size(img)
+
+        if img.shape[0] > img.shape[1]:
+            img = skimage.transform.rotate(img, 90, resize=True, 
+                                           preserve_range=True)
+            img = img.astype(np.int64)
+        
+        imgs.append(img)
+
+    @staticmethod
+    def frames():
+        i = 0
+        while True:
+            time.sleep(3)
+            frame = EmuCamera.imgs[i]
+            yield frame
+
+            if i == len(EmuCamera.imgs) - 1:
+                i = 0
+            else:
+                i += 1

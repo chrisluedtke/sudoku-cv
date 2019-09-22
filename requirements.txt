@@ -5,3 +5,7 @@ Jinja2
 MarkupSafe
 python-dotenv
 Werkzeug
+numpy
+scikit-image
+scipy
+opencv-python
