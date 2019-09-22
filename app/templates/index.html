@@ -3,7 +3,7 @@
   <head>
     {% include 'includes/head.html' %}
     {% block head %}{% endblock head %}
-    <title>sudoku-cv</title>
+    <title>Sudoku CV</title>
   </head>
   <body class="d-flex flex-column h-100 bg-secondary">
     <header>
@@ -11,9 +11,16 @@
     </header>
     <main role="main">
       <div class="container">
-        <div class="row">
-          <div class="col-lg-8 col-md-10 mx-auto">
-              <img src="{{ url_for('video_feed') }}" class="rounded shadow border border-dark" width="100%">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="row">
+            <img src="{{ url_for('video_feed') }}" class="rounded shadow border border-dark" width="100%">
+          </div>
+          <div class="row">
+            <div class="col text-center p-3">
+              <form method="post">
+                <input class="btn btn-dark" type="submit" value="Detect Board" name="detect_board" style="width:15rem">
+              </form>
+            </div>
           </div>
         </div>
       </div>
